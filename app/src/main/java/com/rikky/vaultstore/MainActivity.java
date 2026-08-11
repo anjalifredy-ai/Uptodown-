@@ -79,12 +79,11 @@ public class MainActivity extends AppCompatActivity {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 swipeRefresh.setRefreshing(false);
+                injectRebranding(view);
             }
 
             @Override
             public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-                // Do not proceed on SSL errors silently in production;
-                // cancel so the user isn't exposed to a spoofed/invalid cert.
                 handler.cancel();
             }
         });
@@ -104,6 +103,36 @@ public class MainActivity extends AppCompatActivity {
         webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> {
             downloadFile(url, userAgent, contentDisposition, mimeType);
         });
+    }
+
+    private void injectRebranding(WebView view) {
+        String js =
+            "(function(){" +
+            "try{" +
+                "var walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null,false);" +
+                "var node;" +
+                "while(node=walker.nextNode()){" +
+                    "if(node.nodeValue && /uptodown/i.test(node.nodeValue)){" +
+                        "node.nodeValue=node.nodeValue.replace(/uptodown/ig,'Vault Store');" +
+                    "}" +
+                "}" +
+                "document.querySelectorAll('img[alt*=\"ptodown\" i], img[title*=\"ptodown\" i]').forEach(function(el){" +
+                    "el.alt='Vault Store'; el.title='Vault Store';" +
+                "});" +
+                "var style=document.getElementById('vault-store-theme');" +
+                "if(!style){" +
+                    "style=document.createElement('style');" +
+                    "style.id='vault-store-theme';" +
+                    "style.innerHTML=" +
+                        "'header, .header, .navbar, .top-bar {background-color:#121212 !important;}' +" +
+                        "'a, .text-primary, .brand, .logo-text {color:#FFB300 !important;}' +" +
+                        "'.btn-primary, button[class*=\"primary\"], .badge, .tag {background-color:#FFB300 !important; border-color:#FFB300 !important; color:#121212 !important;}' +" +
+                        "'::selection {background:#FFB300;}';" +
+                    "document.head.appendChild(style);" +
+                "}" +
+            "}catch(e){}" +
+            "})();";
+        view.evaluateJavascript(js, null);
     }
 
     private void downloadFile(String url, String userAgent, String contentDisposition, String mimeType) {
