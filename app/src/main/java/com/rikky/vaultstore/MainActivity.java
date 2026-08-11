@@ -148,3 +148,55 @@ public class MainActivity extends AppCompatActivity {
                 "}" +
             "}catch(e){}" +
             "})();";
+        view.evaluateJavascript(js, null);
+    }
+
+    private void downloadFile(String url, String userAgent, String contentDisposition, String mimeType) {
+        try {
+            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+            String fileName = URLUtil.guessFileName(url, contentDisposition, mimeType);
+
+            request.setMimeType(mimeType);
+            request.addRequestHeader("User-Agent", userAgent);
+            request.addRequestHeader("cookie", CookieManager.getInstance().getCookie(url));
+            request.setDescription("Downloading file...");
+            request.setTitle(fileName);
+            request.allowScanningByMediaScanner();
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
+
+            DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+            if (dm != null) {
+                dm.enqueue(request);
+                Toast.makeText(this, "Downloading: " + fileName, Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Download failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void requestStoragePermission() {
+        if (android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.P) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERM_CODE);
+            }
+        }
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
+            webView.goBack();
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    protected void onDestroy() {
+        webView.destroy();
+        super.onDestroy();
+    }
+}
