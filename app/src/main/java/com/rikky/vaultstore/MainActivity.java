@@ -109,78 +109,42 @@ public class MainActivity extends AppCompatActivity {
         String js =
             "(function(){" +
             "try{" +
-                "var walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null,false);" +
-                "var node;" +
-                "while(node=walker.nextNode()){" +
-                    "if(node.nodeValue && /uptodown/i.test(node.nodeValue)){" +
-                        "node.nodeValue=node.nodeValue.replace(/uptodown/ig,'Vault Store');" +
+                "function rebrand(){" +
+                    "var walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null,false);" +
+                    "var node;" +
+                    "while(node=walker.nextNode()){" +
+                        "if(node.nodeValue && /uptodown/i.test(node.nodeValue)){" +
+                            "node.nodeValue=node.nodeValue.replace(/uptodown/ig,'Vault Store');" +
+                        "}" +
+                    "}" +
+                    "document.querySelectorAll('img[alt*=\"ptodown\" i], img[title*=\"ptodown\" i], svg[aria-label*=\"ptodown\" i]').forEach(function(el){" +
+                        "el.alt='Vault Store'; el.title='Vault Store';" +
+                        "el.style.visibility='hidden';" +
+                    "});" +
+                    "document.querySelectorAll('a[href=\"/\"] svg, header svg, nav svg, .logo svg').forEach(function(el){" +
+                        "el.style.display='none';" +
+                    "});" +
+                "}" +
+                "function injectCss(){" +
+                    "var style=document.getElementById('vault-store-theme');" +
+                    "if(!style){" +
+                        "style=document.createElement('style');" +
+                        "style.id='vault-store-theme';" +
+                        "style.innerHTML=" +
+                            "'header, nav, .header, .navbar, .top-bar, [class*=\"header\" i], [class*=\"navbar\" i] {background-color:#121212 !important; background:#121212 !important;}' +" +
+                            "'body {background-color:#121212 !important;}' +" +
+                            "'a, .text-primary, .brand, .logo-text, [class*=\"brand\" i] {color:#FFB300 !important;}' +" +
+                            "'.btn-primary, button[class*=\"primary\" i], .badge, .tag, [class*=\"editor\" i] {background-color:#FFB300 !important; border-color:#FFB300 !important; color:#121212 !important;}' +" +
+                            "'[style*=\"background-color: rgb(0\"], [style*=\"background:#\"], .banner, [class*=\"banner\" i], [class*=\"bar\" i][class*=\"info\" i] {background-color:#1E1E1E !important; background:#1E1E1E !important;}' +" +
+                            "'::selection {background:#FFB300;}';" +
+                        "document.head.appendChild(style);" +
                     "}" +
                 "}" +
-                "document.querySelectorAll('img[alt*=\"ptodown\" i], img[title*=\"ptodown\" i]').forEach(function(el){" +
-                    "el.alt='Vault Store'; el.title='Vault Store';" +
-                "});" +
-                "var style=document.getElementById('vault-store-theme');" +
-                "if(!style){" +
-                    "style=document.createElement('style');" +
-                    "style.id='vault-store-theme';" +
-                    "style.innerHTML=" +
-                        "'header, .header, .navbar, .top-bar {background-color:#121212 !important;}' +" +
-                        "'a, .text-primary, .brand, .logo-text {color:#FFB300 !important;}' +" +
-                        "'.btn-primary, button[class*=\"primary\"], .badge, .tag {background-color:#FFB300 !important; border-color:#FFB300 !important; color:#121212 !important;}' +" +
-                        "'::selection {background:#FFB300;}';" +
-                    "document.head.appendChild(style);" +
+                "rebrand();" +
+                "injectCss();" +
+                "if(!window.__vaultStoreObserver){" +
+                    "window.__vaultStoreObserver=new MutationObserver(function(){rebrand();});" +
+                    "window.__vaultStoreObserver.observe(document.body,{childList:true,subtree:true,characterData:true});" +
                 "}" +
             "}catch(e){}" +
             "})();";
-        view.evaluateJavascript(js, null);
-    }
-
-    private void downloadFile(String url, String userAgent, String contentDisposition, String mimeType) {
-        try {
-            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-            String fileName = URLUtil.guessFileName(url, contentDisposition, mimeType);
-
-            request.setMimeType(mimeType);
-            request.addRequestHeader("User-Agent", userAgent);
-            request.addRequestHeader("cookie", CookieManager.getInstance().getCookie(url));
-            request.setDescription("Downloading file...");
-            request.setTitle(fileName);
-            request.allowScanningByMediaScanner();
-            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
-
-            DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
-            if (dm != null) {
-                dm.enqueue(request);
-                Toast.makeText(this, "Downloading: " + fileName, Toast.LENGTH_SHORT).show();
-            }
-        } catch (Exception e) {
-            Toast.makeText(this, "Download failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void requestStoragePermission() {
-        if (android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.P) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERM_CODE);
-            }
-        }
-    }
-
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
-            webView.goBack();
-            return true;
-        }
-        return super.onKeyDown(keyCode, event);
-    }
-
-    @Override
-    protected void onDestroy() {
-        webView.destroy();
-        super.onDestroy();
-    }
-}
