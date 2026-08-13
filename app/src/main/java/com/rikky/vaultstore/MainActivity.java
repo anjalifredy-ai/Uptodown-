@@ -64,6 +64,8 @@ public class MainActivity extends AppCompatActivity {
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
         settings.setUserAgentString(settings.getUserAgentString() + " VaultStoreApp");
+        settings.setSupportMultipleWindows(true);
+        settings.setJavaScriptCanOpenWindowsAutomatically(true);
 
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
@@ -98,11 +100,42 @@ public class MainActivity extends AppCompatActivity {
                     progressBar.setVisibility(android.view.View.GONE);
                 }
             }
+
+            @Override
+            public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, android.os.Message resultMsg) {
+                WebView.HitTestResult result = view.getHitTestResult();
+                String url = result != null ? result.extra : null;
+                if (url != null) {
+                    handleUrl(url);
+                    return false;
+                }
+                WebView newWebView = new WebView(view.getContext());
+                newWebView.setWebViewClient(new WebViewClient() {
+                    @Override
+                    public boolean shouldOverrideUrlLoading(WebView v, String newUrl) {
+                        handleUrl(newUrl);
+                        return true;
+                    }
+                });
+                WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+                transport.setWebView(newWebView);
+                resultMsg.sendToTarget();
+                return true;
+            }
         });
 
         webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> {
             downloadFile(url, userAgent, contentDisposition, mimeType);
         });
+    }
+
+    private void handleUrl(String url) {
+        if (url == null) return;
+        if (url.toLowerCase().endsWith(".apk") || url.contains("/dwn/") || url.contains("download")) {
+            downloadFile(url, webView.getSettings().getUserAgentString(), null, "application/vnd.android.package-archive");
+        } else {
+            webView.loadUrl(url);
+        }
     }
 
     private void injectRebranding(WebView view) {
@@ -208,4 +241,4 @@ public class MainActivity extends AppCompatActivity {
         webView.destroy();
         super.onDestroy();
     }
-                             }
+}
