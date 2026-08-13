@@ -110,13 +110,20 @@ public class MainActivity extends AppCompatActivity {
             "(function(){" +
             "try{" +
                 "function rebrand(){" +
-                    "var walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null,false);" +
-                    "var node;" +
-                    "while(node=walker.nextNode()){" +
-                        "if(node.nodeValue && /uptodown/i.test(node.nodeValue)){" +
-                            "node.nodeValue=node.nodeValue.replace(/uptodown/ig,'Vault Store');" +
+                    "function walkText(root){" +
+                        "var walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null,false);" +
+                        "var node;" +
+                        "while(node=walker.nextNode()){" +
+                            "if(node.nodeValue && /uptodown/i.test(node.nodeValue)){" +
+                                "node.nodeValue=node.nodeValue.replace(/uptodown/ig,'Vault Store');" +
+                            "}" +
+                        "}" +
+                        "var all=root.querySelectorAll('*');" +
+                        "for(var i=0;i<all.length;i++){" +
+                            "if(all[i].shadowRoot){ walkText(all[i].shadowRoot); }" +
                         "}" +
                     "}" +
+                    "walkText(document.body);" +
                     "document.querySelectorAll('img[alt*=\"ptodown\" i], img[title*=\"ptodown\" i], svg[aria-label*=\"ptodown\" i]').forEach(function(el){" +
                         "el.alt='Vault Store'; el.title='Vault Store';" +
                         "el.style.visibility='hidden';" +
@@ -131,13 +138,15 @@ public class MainActivity extends AppCompatActivity {
                         "style=document.createElement('style');" +
                         "style.id='vault-store-theme';" +
                         "style.innerHTML=" +
-                            "'header, nav, .header, .navbar, .top-bar, [class*=\"header\" i], [class*=\"navbar\" i] {background-color:#121212 !important; background:#121212 !important;}' +" +
-                            "'body {background-color:#121212 !important;}' +" +
+                            "'html, body, #__next, #root, #app, main {background-color:#121212 !important; background:#121212 !important;}' +" +
+                            "'header, nav, .header, .navbar, .top-bar, [class*=\"header\" i], [class*=\"navbar\" i], [class*=\"topbar\" i], [class*=\"nav-\" i], [id*=\"header\" i] {background-color:#121212 !important; background:#121212 !important; background-image:none !important;}' +" +
+                            "'header *, nav *, [class*=\"header\" i] * {color:#FFB300 !important;}' +" +
                             "'a, .text-primary, .brand, .logo-text, [class*=\"brand\" i] {color:#FFB300 !important;}' +" +
                             "'.btn-primary, button[class*=\"primary\" i], .badge, .tag, [class*=\"editor\" i] {background-color:#FFB300 !important; border-color:#FFB300 !important; color:#121212 !important;}' +" +
+                            "'div, section {background-color: inherit;}' +" +
                             "'[style*=\"background-color: rgb(0\"], [style*=\"background:#\"], .banner, [class*=\"banner\" i], [class*=\"bar\" i][class*=\"info\" i] {background-color:#1E1E1E !important; background:#1E1E1E !important;}' +" +
                             "'::selection {background:#FFB300;}';" +
-                        "document.head.appendChild(style);" +
+                        "document.documentElement.appendChild(style);" +
                     "}" +
                 "}" +
                 "rebrand();" +
@@ -199,4 +208,4 @@ public class MainActivity extends AppCompatActivity {
         webView.destroy();
         super.onDestroy();
     }
-}
+                             }
